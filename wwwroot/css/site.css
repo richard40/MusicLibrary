@@ -1,0 +1,64 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+    background: linear-gradient(to bottom, #4c4c4c, #121212);
+
+}
+.search-bar {
+    width: 50%;
+    border-radius: 25px;
+    background-color: #333;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+    .search-bar::placeholder {
+        color: #bbb;
+    }
+
+    .search-bar:focus {
+        background-color: #444;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+.wave {
+    z-index:-1;
+    position: absolute;
+    width: 100%;
+    top:60vh;
+/*    top: 0;*/
+    left: 0;
+    overflow: hidden; /* Ensure no unwanted spacing */
+}
+
+.frame {
+    display: block;
+    width: 100%; /* Stretch the SVG to fill the width */
+    height: auto; /* Maintain aspect ratio */
+    margin: 0; /* Remove any default spacing */
+    padding: 0;
+}
+
+main {
+height:100vh;
+width:100%;
+
+}

@@ -1,0 +1,510 @@
+﻿@model List<MusicLibrary.Models.Song>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Song Library</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+
+    <style>
+        body {
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(21, 21, 21, 0.6); /* Semi-transparent background */
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px); /* Frosted glass effect */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
+            height:80%;
+        }
+
+        .table-container {
+            flex: 1;
+            background: rgba(26, 26, 26, 0.6); /* Semi-transparent background */
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px); /* Frosted glass effect */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
+            height: 80%;
+        }
+
+        h2 {
+            color: #fff;
+        }
+
+        .table {
+            width: 100%;
+            background: #121212;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+            .table th {
+                background: #222;
+                color: #fff;
+            }
+
+            .table td {
+                background: #1a1a1a;
+                color: #fff;
+            }
+
+            .table tbody tr:nth-child(odd) {
+                background: #202020;
+            }
+
+            .table tbody tr:hover {
+                background: #333;
+            }
+
+        .search-bar {
+            background: #222;
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+            .search-bar:focus {
+                outline: none;
+                background: #333;
+            }
+
+        .edit-link {
+            color: #ff00ff;
+            text-decoration: none;
+        }
+
+        .delete-link {
+            color: white;
+            text-decoration: none;
+        }
+
+
+        .edit-link:hover {
+            text-decoration: underline;
+        }
+
+        .delete-link:hover {
+            text-decoration: underline;
+        }
+
+        .modal-backdrop.show {
+            backdrop-filter: blur(10px);
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" style="height:100%;">
+        <!-- Sidebar Filters -->
+        <div class="sidebar">
+            <h4>Filters</h4>
+            <form method="get" action="@Url.Action("Index", "Song")">
+                <label>Artist</label>
+                <select name="ArtistId" class="form-control">
+                    <option value="">All</option>
+                    @foreach (var artist in ViewBag.Artists)
+                    {
+                        <option value="@artist.Value">@artist.Text</option>
+                    }
+                </select>
+
+                <label>Genre</label>
+                <select name="GenreId" class="form-control">
+                    <option value="">All</option>
+                    @foreach (var genre in ViewBag.Genres)
+                    {
+                        <option value="@genre.Value">@genre.Text</option>
+                    }
+                </select>
+
+                <label>Song</label>
+                <select name="SongId" class="form-control">
+                    <option value="">All</option>
+                    @foreach (var song in ViewBag.Songs)
+                    {
+                        <option value="@song.Value">@song.Text</option>
+                    }
+                </select>
+
+                <button type="submit" class="btn btn-primary mt-3">Filter</button>
+            </form>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container">
+            <h2>Song Library</h2>
+
+            <div class="d-flex justify-content-between mb-3">
+                <input type="text" class="search-bar" placeholder="🔍 Search" id="searchInput">
+                <button id="addSongBtn" class="btn btn-primary">Add New Song</button>
+            </div>
+
+            <!-- Songs Table -->
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Artist</th>
+                        <th>Song Title</th>
+                        <th>Genre</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="songTable">
+                    @foreach (var song in Model)
+                    {
+                        <tr data-id="@song.song_id" data-artist-id="@song.artist_id" data-genre-id="@song.genre_id">
+                            <td>@song.Artist.stagename</td>
+                            <td>@song.title</td>
+                            <td>@song.Genre.title</td>
+                            <td>
+                                <a href="#" class="edit-link">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="#" class="delete-link">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!--container for pagination-->
+
+            <div class="pagination-container">
+                <ul class="pagination">
+                    @if (ViewBag.CurrentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Index", "Song", new { page = ViewBag.CurrentPage - 1 })">Previous</a>
+                        </li>
+                    }
+
+                    @for (var i = 1; i <= ViewBag.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("Index", "Song", new { page = i })">@i</a>
+                        </li>
+                    }
+
+                    @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Index", "Song", new { page = ViewBag.CurrentPage + 1 })">Next</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!--SVG background image-->
+    <div class="wave">
+        <svg class="frame" width="auto" height="100%" viewBox="0 0 1443 304" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g clip-path="url(#clip0_215_45)">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M3 81.6276C124.376 63.6304 235.199 62.5509 332.875 83.8535C442.614 107.794 538.527 151.375 628.751 195.041C734.057 243.338 826.227 300.398 923.137 303.648C1029.26 307.213 1129.24 234.439 1234.26 183.526C1327.39 138.374 1396.07 142.126 1443 165.732V163.541C1396.18 140.447 1327.88 137.171 1235.34 182.298C1129.93 233.708 1029.53 307.138 922.886 303.896C825.668 300.93 732.588 245.016 627.313 196.381C535.983 154.18 440.461 110.766 330.477 88.1143C233.29 68.0892 123.233 70.4211 3 89.2707V81.6276Z" fill="#A300A6" />
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M1443 104.928C1328.91 74.1884 1223.07 57.2794 1125.64 60.8444C991.214 65.7874 871.716 103.274 761.017 142.139C636.799 185.753 521.567 242.612 412.164 224.529C275.192 201.882 162.963 85.1914 42.5557 23.9877C19.3918 12.2095 -2.49095 4.47238 -23 0V1.25677C-3.76467 5.35244 16.9988 11.5457 39.4479 20.1192C152.429 92.697 274.798 201.898 413.5 225.355C523.857 244.017 640.455 186.999 766.543 145.527C877.183 109.135 997.568 75.3622 1132.34 74.3162C1228.19 73.5639 1331.7 92.3706 1443 124.185V104.928Z" fill="white" />
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M1441 31.54C1358.51 12.009 1282.98 8.70896 1216.08 27.5C1140.09 48.835 1073.74 91.364 1010.63 132.965C937.052 181.476 871.935 238.608 803.879 241.198C728.924 244.057 658.49 167.936 584.326 115.381C522.762 71.758 32.132 243.906 0 265.5L389 115.381C421.026 95.48 521.916 68.534 582.115 111.909C657.095 165.94 728.218 243.926 804.182 241.913C872.781 240.109 938.612 183.599 1013.38 137.213C1076.87 97.822 1144.04 58.441 1220.59 40.902C1286.62 25.776 1360.51 32.117 1441 53.706V31.54Z" fill="#46006F" />
+            </g>
+            <defs>
+                <clipPath id="clip0_215_45">
+                    <rect width="1443" height="304" fill="white" />
+                </clipPath>
+            </defs>
+        </svg>
+
+
+
+    </div>
+
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: rgba(26, 26, 26, 0.9); backdrop-filter: blur(15px); border-radius: 15px; border: none;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white" id="deleteModalLabel">Delete this song</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="deleteForm" asp-action="Delete" asp-controller="Song" method="post">
+                        
+                        <input type="hidden" id="deleteId" name="song_id" />
+
+         
+
+
+
+
+                        <div class="mb-3">
+                            <label for="deleteTitle" class="form-label text-white">Song Title</label>
+                            <input type="text" class="form-control" id="deleteTitle" name="title" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    
+
+    <!-- Add Song Modal -->
+    <div id="addSongModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="background: rgba(26, 26, 26, 0.9); backdrop-filter: blur(15px); border-radius: 15px; border: none;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white" id="createModalLabel">Add new song</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSongForm">
+                        
+                        <div class="mb-3">
+                            <label for="artist">Artist</label>
+                            <select id="artist" name="artist_id" class="form-control">
+                                @foreach (var artist in ViewBag.Artists)
+                                {
+                                    <option value="@artist.Value">@artist.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="genre">Genre</label>
+                            <select id="genre" name="genre_id" class="form-control">
+                                @foreach (var genre in ViewBag.Genres)
+                                {
+                                    <option value="@genre.Value">@genre.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="songTitle">Title</label>
+                            <input type="text" id="songTitle" name="title" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: rgba(26, 26, 26, 0.9); backdrop-filter: blur(15px); border-radius: 15px; border: none;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-white" id="editModalLabel">Edit this song</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm" asp-action="Edit" asp-controller="Song" method="post">
+                        <input type="hidden" id="editArtistId" name="artist_id" />
+                        <input type="hidden" id="editGenreId" name="genre_id" />
+                        <input type="hidden" id="editId" name="song_id" />
+                        <div class="mb-3">
+                                <label for="editArtist" class="form-label text-white">Artist</label>
+                                <input type="text" class="form-control" id="editArtist" readonly />
+                            </div>
+                       
+                        <div class="mb-3">
+                            <label for="editGenre" class="form-label text-white">Genre</label>
+                            <select class="form-control" id="editGenre" type="text">
+                                @foreach (var genre in ViewBag.Genres)
+                                {
+                                    <option value="@genre.Value">@genre.Text</option>
+                                }
+                            </select>
+
+                 
+
+                        </div>
+
+
+
+                        
+
+
+
+                        <div class="mb-3">
+                            <label for="editTitle" class="form-label text-white">Song Title</label>
+                                <input type="text" class="form-control" id="editTitle" name="title" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+    <script>
+        $(document).ready(function () {
+            $("#searchInput").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                $("#songTable tr").filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
+            $(document).on("click", ".edit-link", function (e) {
+                e.preventDefault();
+
+                const row = $(this).closest("tr");
+                const id = row.data("id");
+                const artist = row.find("td:nth-child(1)").text().trim();
+                const title = row.find("td:nth-child(2)").text().trim();
+                const genre = row.find("td:nth-child(3)").text().trim();
+
+                $("#editId").val(id);
+                $("#editArtist").val(artist);
+                $("#editTitle").val(title);
+                $("#editGenre").val(genre);
+
+                      $("#editArtistId").val(row.data("artist-id"));
+        $("#editGenreId").val(row.data("genre-id"));
+
+                $("#editModal").modal("show");
+            });
+
+
+                    $(document).ready(function () {
+            $("#addSongBtn").click(function () {
+                $("#addSongModal").modal("show");
+            });
+
+            $("#addSongForm").on("submit", function (event) {
+                event.preventDefault();
+
+                var formData = $(this).serialize();
+
+                $.ajax({
+                    url: "/Song/Create",
+                    type: "POST",
+                    data: formData,
+                    success: function (response) {
+                        if (response.success) {
+                            alert("Song added successfully!");
+                            location.reload(); // Refresh to show the new song in the list
+                        } else {
+                            alert("Error: " + response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert("An error occurred: " + xhr.responseText);
+                    }
+                });
+            });
+        });
+
+
+
+
+                    $(document).on("click", ".delete-link", function (e) {
+            e.preventDefault();
+
+            const row = $(this).closest("tr");
+            const songId = row.data("id");
+
+            if (!songId) {
+                alert("Song ID not found.");
+                return;
+            }
+
+            if (confirm("Are you sure you want to delete this song?")) {
+                $.ajax({
+                    url: "/Song/Delete",
+                    type: "POST",
+                    data: { song_id: songId },
+                    success: function (response) {
+                        if (response.success) {
+                            alert("Song deleted successfully!");
+                            row.remove(); // Remove the row from the table instead of reloading
+                        } else {
+                            alert("Error: " + response.message);
+                            console.log("Server Response:", response);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert("An error occurred: " + xhr.responseText);
+                    }
+                });
+            }
+        });
+
+
+
+
+
+
+
+
+
+
+
+
+                    $(document).on("change", "#editGenre", function () {
+            var selectedGenreId = $(this).val();
+            $("#editGenreId").val(selectedGenreId);  // Update the hidden input
+        });
+
+                            $("#editForm").on("submit", function (event) {
+            event.preventDefault();
+
+            var formData = $(this).serialize();
+            console.log("Submitting Data:", formData);  // Debugging
+
+
+            $.ajax({
+                url: "/Song/Edit",
+                type: "POST",
+                data: formData,
+                success: function (response) {
+                    $("#editModal").modal("hide");
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert("Error: " + response.message);
+                        console.log("Model Errors: ", response.errors);
+                    }
+                },
+                error: function (xhr) {
+                    alert("An error occurred: " + xhr.responseText);
+                }
+
+            });
+        });
+
+        });
+    </script>
+</body>
+</html>
